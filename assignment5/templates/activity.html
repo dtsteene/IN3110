@@ -50,26 +50,37 @@
   </head>
   <body>
     <div class="topnav">
-      <a class="active" href="/">Home</a>
+      <a href="/">Home</a>
       <a href="/docs">FastAPI Docs</a>
       <a href="/help/index.html">Help</a>
-      <a href="/activity">Price per activity</a>
+      <a class="active" href="/activity">Price per activity</a>
     </div>
     <header>
-      <h1>Strømpriser</h1>
+      <h1>Prices per activity</h1>
     </header>
     <div id="vis"></div>
     <!-- Create Form -->
     <form action="javascript:refreshPlot()" id="price-form">
-      <input type="checkbox" name="locations" value="NO1" checked> Oslo<br>
-      <input type="checkbox" name="locations" value="NO2" checked> Kristiansand<br>
-      <input type="checkbox" name="locations" value="NO3" checked> Trondheim<br>
-      <input type="checkbox" name="locations" value="NO4" checked> Tromsø<br>
-      <input type="checkbox" name="locations" value="NO5" checked> Bergen<br>
-      <label for="end">End date:</label>
-      <input type="date" name="end" id="end" value="2022-11-14" min="2022-10-03" max="2023-11-14">
-      <label for="days">Days</label>
-      <input type="number" name="days" id="days" value="8" min="1" max="14">
+      <label for="activities">Choose an activity:</label><br>
+
+      <select name="activities" id="activity">
+        <option value="shower">Take a shower</option>
+        <option value="heat">Heat the apartment</option>
+        <option value="baking">Cook a meal</option>
+      </select><br>
+
+      <label for="locations">Choose a region:</label><br>
+
+      <select name="locations" id="location">
+        <option value="NO1">Oslo</option>
+        <option value="NO2">Kristiansand</option>
+        <option value="NO3">Trondheim</option>
+        <option value="NO4">Tromsø</option>
+        <option value="NO5">Bergen</option>
+      </select><br>
+
+      <label for="minutes">Minutes</label>
+      <input type="text" id="minutes" value="10" min="1" max="60">
       <button type="submit">Refresh</button>
     </form>
 
@@ -77,31 +88,28 @@
       async function refreshPlot() {
         // begin constructing URL to request the plot JSON
         const plotUrl = new URL(
-          `${document.location.protocol}//${document.location.host}/plot_prices.json`
+          `${document.location.protocol}//${document.location.host}/plot_activity.json`
         );
 
         // get inputs from the form
 
-        // get selected location checkboxes
-        for (checkbox of document
-          .getElementById("price-form")
-          .querySelectorAll("input[name=locations]")) {
-          if (checkbox.checked) {
-            plotUrl.searchParams.append("locations", checkbox.value);
-          }
-        }
-        var endInput = document.getElementById("end");
-        if (endInput) {
-          plotUrl.searchParams.append("end", endInput.value);
+        var actInput = document.getElementById("activity");
+        if (actInput) {
+          plotUrl.searchParams.append("activity", actInput.value);
         } else {
-          console.warn('No input with id="end"');
+          console.warn('No input with id="activity"')
         }
-
-        var daysInput = document.getElementById("days");
-        if (daysInput) {
-          plotUrl.searchParams.append("days", daysInput.value);
+        var locInput = document.getElementById("location");
+        if (locInput) {
+          plotUrl.searchParams.append("location", locInput.value);
         } else {
-          console.warn('No input with id="days"');
+          console.warn('No input with id="location"')
+        }
+        var minInput = document.getElementById("minutes");
+        if (minInput) {
+          plotUrl.searchParams.append("minutes", minInput.value);
+        } else {
+          console.warn('No input with id="minutes"');
         }
 
         console.log(`requesting new chart from ${plotUrl.href}`);

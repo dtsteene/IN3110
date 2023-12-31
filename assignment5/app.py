@@ -1,12 +1,8 @@
-"""
-The bridge between html and python.
+"""FastAPI app for interactively visualizing power prices accross Norway."""
 
-Uses FastAPI to diplay HTML on local host in a
-interactive way
-"""
 import datetime
-from typing import List, Optional, Tuple
-from fastapi.responses import HTMLResponse
+from typing import List, Optional
+
 import altair as alt
 from fastapi import FastAPI, Query, Request
 from fastapi.templating import Jinja2Templates
@@ -17,67 +13,136 @@ from strompris import (
     fetch_day_prices,
     fetch_prices,
     plot_activity_prices,
-    plot_daily_prices,
     plot_prices,
 )
-
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
+# `GET /` should render the `strompris.html` template
+# with inputs:
+# - request
+# - location_codes: location code dict
+# - today: current date
 
-@app.get('/', response_class=HTMLResponse)
-def root(request: Request):
-    """
-    Load the basepage when requested
+
+@app.get("/")
+def strompris_html(request: Request):
+    """Render the strompris.html template
 
     arguments:
-    request(Request): Request to the server
-
-    returns:
-    templates.TemplateResponse with the 'strompris.html'
-    template.
+        request (Request): Request object with data
     """
-    return templates.TemplateResponse("strompris.html",
-    { "request": request,
-      "location_codes": LOCATION_CODES,
-      "today": datetime.date.today()
-    })
-@app.get('/plot_prices.json')
-def strom_plot_json(
+    return templates.TemplateResponse(
+        "strompris.html",
+        {
+            "request": request,
+            "location_codes": LOCATION_CODES,
+            "today": datetime.date.today(),
+        },
+    )
+
+
+# GET /plot_prices.json should take inputs:
+# - locations (list from Query)
+# - end (date)
+# - days (int, default=7)
+# all inputs should be optional
+# return should be a vega-lite JSON chart (alt.Chart.to_dict())
+# produced by `plot_prices`
+# (task 5.6: return chart stacked with plot_daily_prices)
+
+
+@app.get("/plot_prices.json")
+def prices_plot_json(
     locations: tuple = Query(default=tuple(LOCATION_CODES.keys())),
     end: datetime.date = datetime.date.today(),
-    days: int = 7
+    days: int = 7,
 ):
-    """
-    Get strom price chart using strompris.py
-
-    Is called whenever the strompris chart is loaded
+    """Create altair chart of prices.
 
     arguments:
-    locations(tuple): The location codes for the
-    locations to plot. Default is set to all locations.
-
-    end(datetime.date): The latest date which to
-    plot data for. Default set to today.
-
-    days(int): The number of preceeding days from end
-    which to plot. Default set to 7.
-
+        locations (tuple): tuple with locations to plot prices of
+        end (datetime.date): end date to plot prices from
+        days (int): amount of days to plot
     returns:
-    chart_dict(alt.Chart): chart with price plot as
-    dictionary.
-
+        chart (dict): dictionary of plot, converted to json
     """
-    chart = plot_prices(fetch_prices(end, days, locations))
-    chart_dict = alt.Chart.to_dict(chart)
-    return chart_dict
+    df = fetch_prices(end, days, locations)
+    chart = plot_prices(df)
+    return alt.Chart.to_dict(chart)
 
-app.mount(
-path="/help",
-app=StaticFiles(directory="docs/build/html"),
-name="sphinx")
+
+# Task 5.6:
+# `GET /activity` should render the `activity.html` template
+# activity.html template must be adapted from `strompris.html`
+# with inputs:
+# - request
+# - location_codes: location code dict
+# - activities: activity energy dict
+# - today: current date
+
+
+@app.get("/activity")
+def activity_html(request: Request):
+    """Render the activity.html template
+
+    arguments:
+        request (Request): Request object with data
+    """
+    return templates.TemplateResponse(
+        "activity.html",
+        {
+            "request": request,
+            "location_codes": LOCATION_CODES,
+            "activities": ACTIVITIES,
+            "today": datetime.date.today(),
+        },
+    )
+
+
+# Task 5.6:
+# `GET /plot_activity.json`
+#  should return vega-lite chart JSON (alt.Chart.to_dict())
+# from `plot_activity_prices`
+# with inputs:
+# - location (single, default=NO1)
+# - activity (str, default=shower)
+# - minutes (int, default=10)
+
+
+@app.get("/plot_activity.json")
+def prices_plot_activity_json(
+    location: str = "NO1",
+    activity: str = "shower",
+    minutes: int = 10,
+):
+    """Create altair chart of prices of activity.
+
+    arguments:
+        location (str): location to plot prices of
+        activity (str): activity to plot price for
+        minutes (int): amount of minutes to price activity for
+    returns:
+        chart (dict): dictionary of plot, converted to json
+    """
+    df = fetch_day_prices(location=location)
+    chart = plot_activity_prices(df, activity, minutes)
+    return alt.Chart.to_dict(chart)
+
+
+# mount your docs directory as static files at `/help`
+
+app.mount("/help", StaticFiles(directory="docs/_build/html"), name="help")
 
 if __name__ == "__main__":
+    # use uvicorn to launch your application on port 5000
+
+    from threading import Thread
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=5000, log_level="info")
+
+    def run_app():
+        uvicorn.run(app, host="127.0.0.1", port=5000)
+
+    app_thread = Thread(target=run_app)
+    app_thread.start()
