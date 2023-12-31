@@ -1,3 +1,5 @@
+# Problem Solving with High-level Languages 
+
 In this project-based course centered around problem-solving with Python, I completed several projects, with the final three being the most engaging and substantial.
 
 The initial standout project required us to create a package installable via pip that could apply filters to images. We worked with .toml files for setting up the package and utilized Numba for its Just-in-Time (JIT) compilation to enhance our code's performance. In addition, we implemented line profilers to further optimize our code.
