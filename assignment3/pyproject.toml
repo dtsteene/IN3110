@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+version = "0.1.0"
+requires-python = ">=3.7"
+license = {text = "MIT License"}
+name = "instapy"
+description = "metadata for instapy project"
+readme = "README.md"
+dependencies = ["numpy", "pillow", "numba"]
+
+
+[project.scripts]
+instapy = "instapy.cli:main"
