@@ -1,9 +1,8 @@
 # Assignment 5: Strømpris
-Created by Augustfe (Augustfe@mail.uio.no) \
-https://github.uio.no/IN3110/IN3110-augustfe/tree/main/assignment5
+Created by dtsteene (dtsteene@math.uio.no)
 ## Required dependencies
 ### Packages used
-The programs were run on conda 22.9.0 with Python 3.9.12.final.0 on an M1 mac. The following packages were used. Required packages can be installed with `pip install -r requirements.txt`.
+The programs were run on conda 22.9.0 with Python 3.9.12. The following packages were used. Required packages can be installed with `pip install -r requirements.txt`.
 
 - altair
 - altair-viewer
